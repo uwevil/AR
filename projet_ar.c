@@ -78,12 +78,12 @@ void noeud(int rang){
             l.v = (voisins *)malloc(sizeof(voisins));
             voisins *tmp = l.v;
             
-            sprintf(buf, "%d;%d;%d\n", rang, l.x, l.y);
+            sprintf(buf, "%d;%d;%d;%d\n", l.min.x, l.min.y, l.max.x, l.max.y);
 
             for (i = 0; i < l.nb_vois; i++) {
                 tmp->id = strtok(NULL, ";");
                 
-                MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_UPDATE, MPI_COMM_WORLD);
+                MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
                 
                 tmp->min.x = atoi(strtok(NULL, ";"));
                 tmp->min.y = atoi(strtok(NULL, ";"));
@@ -127,6 +127,7 @@ void noeud(int rang){
         
         switch (status.MPI_TAG) {
             case TAG_NOEUD:
+                
                 int id_req = atoi(strtok(data, ";"));
                 int x_req = atoi(strtok(NULL, ";"));
                 int y_req = atoi(strtok(NULL, ";"));
@@ -200,7 +201,7 @@ void noeud(int rang){
                             strcat(buf_tmp1, buf_tmp2);
                         }
                         if (est_voisins(l.min, l.max, tmp->min, tmp->max)) {
-                            sprintf(buf, "%d;%d;%d;%d;%d\n", l.id, l.min.x, l.min.y, l.max.x, l.max.y);
+                            sprintf(buf, "%d;%d;%d;%d\n", l.min.x, l.min.y, l.max.x, l.max.y);
                             MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_UPDATE, MPI_COMM_WORLD);
                             prev = tmp;
                             tmp = tmp->next;
@@ -223,7 +224,6 @@ void noeud(int rang){
                         }
                     }
                     
-                    
                     sprintf(buf, "%d;%d;%d;%d;%d;%d;%d", x_req, y_req, z1.x, z1.y, z2.x, z2.y, t);
                     strcat(buf, buf_tmp1);
                     buf[strlen(buf)] = '\0';
@@ -233,6 +233,7 @@ void noeud(int rang){
                 break;
                 
             case TAG_DELETE:
+                
                 prev = tmp;
                 for (i = 0; i < l.nb_vois && tmp != NULL; i++, tmp = tmp->next) {
                     if (tmp->id == source) {
@@ -253,6 +254,7 @@ void noeud(int rang){
                 break;
                 
             case TAG_ADD:
+                
                 prev = l.v;
                 tmp = (voisins *)malloc(sizeof(voisins));
                 tmp->id = source;
@@ -279,7 +281,16 @@ void noeud(int rang){
                 break;
                 
             case TAG_UPDATE:
-                
+
+                for (i = 0; i < l.nb_vois && tmp != NULL; i++, tmp = tmp->next) {
+                    if (source = tmp->id) {
+                        tmp->min.x = strtok(data, ";");
+                        tmp->min.y = strtok(NULL, ";");
+                        tmp->max.x = strtok(NULL, ";");
+                        tmp->max.y = strtok(NULL, ";");
+                        break;
+                    }
+                }
                 break;
                 
             default:
