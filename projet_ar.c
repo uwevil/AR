@@ -24,8 +24,6 @@ void coordinateur(){
 
 int est_voisins(point a, point b, point c, point d){
     if ((a.x == c.x) || (b.x == d.x) || (a.x == d.x) || (b.x == c.x)) {
-        //y_max_a = b.y; y_max_c = d.y
-        //y_min_a = a.y; y_min_c = c.y
         if ((a.y =< c.y) && (d.y <= b.y) || (a.y >= c.y) && (b.y <= d.y)){
             return 1;
         }
@@ -35,7 +33,6 @@ int est_voisins(point a, point b, point c, point d){
             return 1;
         }
     }
-    
     return 0;
 }
 
@@ -134,20 +131,24 @@ void noeud(int rang){
         switch (status.MPI_TAG) {
             case TAG_NOEUD:
                 if ((x_req < l.min.x) || (x_req > l.max.x) || (y_req < l.min.y) || (y_req > l.max.y)) {
-                    if (x_req >= y_req) {
-                        if (x_req > l.max.x) {
-                            route = 1;
-                        }else {
-                            route = 3;
-                        }
+                  //  if (x_req >= y_req) {
+                    if (x_req > l.max.x) {
+                        route = 1;
+                    }else if (x_req < l.min.x){
+                        route = 3;
+                    }else if( y_req > l.max.y){
+                        route = 0;
                     }else{
-                        if (y_req > l.max.y) {
-                            route = 0;
-                        }else{
-                            route = 2;
-                        }
+                        route = 2;
                     }
-                    for (i = 0; i < l.nb_vois; i ++) {
+                 //   }else{
+                  //      if (y_req > l.max.y) {
+                 //           route = 0;
+                  //      }else{
+                 //           route = 2;
+                 //       }
+                //    }
+                    for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
                         if (tmp->pos == route) {
                             sprintf(buf, "%d;%d;%d\n", id_req, x_req, y_req);
                             MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_NOEUD, MPI_COMM_WORLD);
@@ -183,7 +184,6 @@ void noeud(int rang){
                         z2 = n;
                     }
                     
-                    
                     while ((x_req < z1.x) || (x_req > z2.x) || (y_req < z1.y) || (y_req > z2.y)) {
                         x_req = rand() % z2.x;
                         y_req = rand() % z2.y;
@@ -210,13 +210,18 @@ void noeud(int rang){
                                 free(tmp);
                                 tmp = l.v;
                                 prev = l.v;
+                                l.nb_vois--;
+                                i--;
                             }else{
                                 prev->next = tmp->next;
                                 free(tmp);
+                                l.nb_vois--;
+                                i--;
                                 tmp = prev->next;
                             }
                         }
                     }
+                    
                     
                     sprintf(buf, "%d;%d;%d;%d;%d;%d;%d", x_req, y_req, z1.x, z1.y, z2.x, z2.y, t);
                     strcat(buf, buf_tmp1);
@@ -225,9 +230,26 @@ void noeud(int rang){
                     MPI_Send(buf, 128, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
                 }
                 break;
-            case
-                    
-        
+                
+            case TAG_DELETE:
+                prev = tmp;
+                for (i = 0; i < l.nb_vois && tmp != NULL; i++, tmp = tmp->next) {
+                    if (tmp->id == source) {
+                        if (tmp == l.v) {
+                            l.v = tmp->next;
+                            free(tmp);
+                            tmp = l.v;
+                            break;
+                        }else{
+                            prev->next = tmp->next;
+                            free(tmp);
+                            tmp = prev->next;
+                            break;
+                        }
+                    }
+                }
+                l.nb_vois--;
+                break;
                 
             default:
                 break;

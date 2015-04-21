@@ -16,9 +16,9 @@
 #define TAG_DATA    1
 #define TAG_SEARCH  2
 #define TAG_OK      3
-#define TAG_ADD  4
+#define TAG_ADD     4
 #define TAG_DELETE  5
-#define TAG_UPDATE 6
+#define TAG_UPDATE  6
 
 #define min(a,b) ((a <= b) ? a : b)
 #define max(a,b) ((a >= b) ? a : b)
