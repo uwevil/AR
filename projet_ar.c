@@ -117,9 +117,6 @@ void noeud(int rang){
     while (1) {
         MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         int source = status.MPI_SOURCE;
-        int id_req = atoi(strtok(data, ";"));
-        int x_req = atoi(strtok(NULL, ";"));
-        int y_req = atoi(strtok(NULL, ";"));
         
         int i, t;
         int route;
@@ -130,6 +127,10 @@ void noeud(int rang){
         
         switch (status.MPI_TAG) {
             case TAG_NOEUD:
+                int id_req = atoi(strtok(data, ";"));
+                int x_req = atoi(strtok(NULL, ";"));
+                int y_req = atoi(strtok(NULL, ";"));
+                
                 if ((x_req < l.min.x) || (x_req > l.max.x) || (y_req < l.min.y) || (y_req > l.max.y)) {
                   //  if (x_req >= y_req) {
                     if (x_req > l.max.x) {
@@ -249,6 +250,36 @@ void noeud(int rang){
                     }
                 }
                 l.nb_vois--;
+                break;
+                
+            case TAG_ADD:
+                prev = l.v;
+                tmp = (voisins *)malloc(sizeof(voisins));
+                tmp->id = source;
+                // car le mess sous forme xmin;ymin;xmax;ymax
+                tmp->min.x = atoi(strtok(data, ";"));;
+                tmp->min.y = atoi(strtok(NULL, ";"));;
+                tmp->max.x = atoi(strtok(NULL, ";"));
+                tmp->max.y = atoi(strtok(NULL, ";"));
+                
+                if (tmp->max.x == l.min.x) {
+                    tmp->pos = 3;
+                }else if (tmp->min.x == l.max.x){
+                    tmp->pos = 1;
+                }else if (tmp->min.y == l.max.y){
+                    tmp->pos = 0;
+                }else{
+                    tmp->pos = 2;
+                }
+                
+                l.nb_vois++;
+                tmp->next = prev;
+                l.v = tmp;
+                
+                break;
+                
+            case TAG_UPDATE:
+                
                 break;
                 
             default:
