@@ -65,6 +65,16 @@ void coordinateur(int nb_proc){
 
 int est_voisins(point a, point b, point c, point d){
     printf("est voisins: (%d %d, %d %d)(%d %d, %d %d) => ",a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y);
+   
+    if (((a.x == c.x) && (( b.y == c.y) || (a.y == d.y))) ||
+        ((b.x == c.x) && (( b.y == d.y) || (a.y == c.y))) ||
+        ((a.x == d.x) && (( b.y == d.y) || (a.y == c.y))) ||
+        ((b.x == d.x) && (( b.y == c.y) || (a.y == d.y)))) {
+        printf("OK\n");
+
+        return 1;
+    }
+    
     /*
     if  (((a.x == c.x) || (b.x == d.x) || (a.x == d.x) || (b.x == c.x)) &&
         (((a.y == c.y) || (b.y == d.y)) || ((a.y == d.y) && (b.y == c.y)))){
