@@ -11,6 +11,7 @@
 #include <CommonCrypto/CommonDigest.h>
 #include <pthread.h>
 #include <mpi.h>
+#include <time.h>
 
 #define TAG_NOEUD   0
 #define TAG_DATA    1
@@ -19,6 +20,8 @@
 #define TAG_ADD     4
 #define TAG_DELETE  5
 #define TAG_UPDATE  6
+
+#define size 1<<15
 
 #define min(a,b) ((a <= b) ? a : b)
 #define max(a,b) ((a >= b) ? a : b)
