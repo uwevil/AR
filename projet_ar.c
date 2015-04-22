@@ -64,16 +64,22 @@ void coordinateur(int nb_proc){
 }
 
 int est_voisins(point a, point b, point c, point d){
-    if ((a.x == c.x) || (b.x == d.x) || (a.x == d.x) || (b.x == c.x)) {
-        if (((a.y <= c.y) && (d.y <= b.y)) || ((a.y >= c.y) && (b.y <= d.y))){
+    printf("est voisins: (%d %d, %d %d)(%d %d, %d %d) => ",a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y);
+    
+    if  (((a.x == c.x) || (b.x == d.x) || (a.x == d.x) || (b.x == c.x)) &&
+        (((a.y == c.y) || (b.y == d.y)) || ((a.y == d.y) && (b.y == c.y)))){
+        printf("OK\n");
             return 1;
         }
-    }
-    if ((a.y == c.y) || (b.y == d.y) || (a.y == d.y) || (b.y == c.y)) {
+  
+    printf("NO\n");
+
+   /* if ((a.y == c.y) || (b.y == d.y) || (a.y == d.y) || (b.y == c.y)) {
         if (((a.x <= c.x) && (d.x <= b.x)) || ((a.x >= c.x) && (b.x <= d.x))){
             return 1;
         }
-    }
+    }*/
+    
     return 0;
 }
 
@@ -96,7 +102,6 @@ void noeud(int rang){
         l.d = NULL;
         l.v = NULL;
         MPI_Send("", size, MPI_CHAR, 0, TAG_OK, MPI_COMM_WORLD);
-
     }
     else{
         /*
@@ -121,7 +126,9 @@ void noeud(int rang){
     
         int i;
         voisins *tmp;
-    
+        
+        printf(" pos -%d-%d-%d-\n", rang, l.p.x, l.p.y);
+
         if (l.nb_vois > 0) {
             l.v = (voisins *)malloc(sizeof(voisins));
             voisins *tmp = l.v;
@@ -130,8 +137,6 @@ void noeud(int rang){
 
             for (i = 0; i < l.nb_vois; i++) {
                 tmp->id = atoi(strtok(NULL, ";"));
-                
-                MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
                 
                 (tmp->min).x = atoi(strtok(NULL, ";"));
                 (tmp->min).y = atoi(strtok(NULL, ";"));
@@ -148,6 +153,9 @@ void noeud(int rang){
                     tmp->pos = 2;
                 }
                 
+                printf("voisin pos -%d-%d-\n", tmp->id, tmp->pos);
+                MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
+
                 if (i + 1 < l.nb_vois) {
                     tmp->next = (voisins *)malloc(sizeof(voisins));
                 }else{
@@ -208,17 +216,54 @@ void noeud(int rang){
                         m.y = l.min.y;
                         n.x = (l.min.x + l.max.x) / 2;
                         n.y = l.max.y;
-
-                    }
-                    else{
+                        
+                        if (l.p.x <= n.x) {
+                            l.max.x = n.x;
+                            l.max.y = n.y;
+                            
+                            z1.x = m.x;
+                            z1.y = m.y;
+                            
+                            z2.x = o.x;
+                            z2.y = o.y;
+                        }else{
+                            l.min.x = m.x;
+                            l.min.y = m.y;
+                            
+                            z1.x = k.x;
+                            z1.y = k.y;
+                            
+                            z2.x = n.x;
+                            z2.y = n.y;
+                        }
+                    }else{
                         n.y = (l.min.y + l.max.y) / 2;
                         n.x = l.max.x;
                         m.y = (l.min.y + l.max.y) / 2;
                         m.x = l.min.x;
                         
+                        if (l.p.y <= n.y) {
+                            l.max.x = n.x;
+                            l.max.y = n.y;
+                            
+                            z1.x = m.x;
+                            z1.y = m.y;
+                            
+                            z2.x = o.x;
+                            z2.y = o.y;
+                        }else{
+                            l.min.x = m.x;
+                            l.min.y = m.y;
+                            
+                            z1.x = k.x;
+                            z1.y = k.y;
+                            
+                            z2.x = n.x;
+                            z2.y = n.y;
+                        }
                     }
-                    
-                    if (l.p.x >= k.x && l.p.x <= n.x && l.p.y >= k.y && l.p.y <= n.y) {
+                   /*
+                    if (l.p.x >= l.min.x && l.p.x <= m.x && l.p.y >= k.y && l.p.y <= n.y) {
                         l.max = n;
                         z1 = m;
                         z2 = o;
@@ -228,10 +273,11 @@ void noeud(int rang){
                         z1 = k;
                         z2 = n;
                     }
+                    */
                     
                     while ((x_req < z1.x) || (x_req > z2.x) || (y_req < z1.y) || (y_req > z2.y)) {
-                        x_req = rand() % z2.x;
-                        y_req = rand() % z2.y;
+                        x_req = rand() % 1000;
+                        y_req = rand() % 1000;
                     }
                     
                     t = 0;
@@ -300,14 +346,27 @@ void noeud(int rang){
                 
             case TAG_ADD:
                 
-                prev = l.v;
-                tmp = (voisins *)malloc(sizeof(voisins));
-                tmp->id = source;
-                // car le mess sous forme xmin;ymin;xmax;ymax
-                (tmp->min).x = atoi(strtok(data, ";"));;
-                (tmp->min).y = atoi(strtok(NULL, ";"));;
-                (tmp->max).x = atoi(strtok(NULL, ";"));
-                (tmp->max).y = atoi(strtok(NULL, ";"));
+                if (l.v == NULL) {
+                    l.v = (voisins *)malloc(sizeof(voisins));
+                    l.v->id = source;
+                    (l.v->min).x = atoi(strtok(data, ";"));
+                    (l.v->min).y = atoi(strtok(NULL, ";"));
+                    (l.v->max).x = atoi(strtok(NULL, ";"));
+                    (l.v->max).y = atoi(strtok(NULL, ";"));
+                    l.v->next = NULL;
+                    tmp = l.v;
+                }else{
+                    prev = l.v;
+                    tmp = (voisins *)malloc(sizeof(voisins));
+                    tmp->id = source;
+                    // car le mess sous forme xmin;ymin;xmax;ymax
+                    (tmp->min).x = atoi(strtok(data, ";"));
+                    (tmp->min).y = atoi(strtok(NULL, ";"));
+                    (tmp->max).x = atoi(strtok(NULL, ";"));
+                    (tmp->max).y = atoi(strtok(NULL, ";"));
+                    tmp->next = prev;
+                    l.v = tmp;
+                }
                 
                 if (tmp->max.x == l.min.x) {
                     tmp->pos = 3;
@@ -320,8 +379,6 @@ void noeud(int rang){
                 }
                 
                 l.nb_vois++;
-                tmp->next = prev;
-                l.v = tmp;
                 
                 break;
                 
