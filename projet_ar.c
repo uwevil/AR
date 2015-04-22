@@ -8,6 +8,7 @@ void coordinateur(int nb_proc){
     int i = 0;
     
     MPI_Recv(data, size, MPI_CHAR, 1, TAG_OK, MPI_COMM_WORLD, &status);
+    printf("....................adding node.................\n");
 
     for (i = 0; i < nb_proc - 2; i++) {
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_NOEUD, MPI_COMM_WORLD, &status);
@@ -20,6 +21,7 @@ void coordinateur(int nb_proc){
     
     struct donnee mem[10];
     int j = 0;
+    printf("....................adding data.................\n");
 
     for (i = 0; i < 10*nb_proc; i++) {
         int x, y;
@@ -35,11 +37,11 @@ void coordinateur(int nb_proc){
         
         sprintf(data, "%d;%d;%d\n", x, y, x + y);
         MPI_Send(data, size, MPI_CHAR, 1, TAG_DATA, MPI_COMM_WORLD);
-        printf("ajout de donnee %s =>", data);
+        printf("ajout de donnee %s", data);
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
     }
     
-    printf("seraching.................\n");
+    printf("....................seraching data.................\n");
     for (i = 0; i < 14; i++) {
         int x, y;
         
@@ -123,7 +125,7 @@ void noeud(int rang){
         int i;
         voisins *tmp;
         
-        printf(" pos -%d-%d-%d-\n", rang, l.p.x, l.p.y);
+        printf(" position réelle -%d-%d-%d-\n", rang, l.p.x, l.p.y);
 
         if (l.nb_vois > 0) {
             l.v = (voisins *)malloc(sizeof(voisins));
@@ -149,7 +151,7 @@ void noeud(int rang){
                     tmp->pos = 2;
                 }
                 
-                printf("voisin pos -%d-%d-\n", tmp->id, tmp->pos);
+            //    printf("voisin pos -%d-%d-\n", tmp->id, tmp->pos);
                 MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
 
                 if (i + 1 < l.nb_vois) {
@@ -285,7 +287,7 @@ void noeud(int rang){
                         }
                         if (est_voisins(l.min, l.max, tmp->min, tmp->max)) {
                             sprintf(buf, "%d;%d;%d;%d\n", l.min.x, l.min.y, l.max.x, l.max.y);
-                            printf("%d send update to %d-%s-\n", rang, tmp->id, buf);
+                   //         printf("%d send update to %d-%s-\n", rang, tmp->id, buf);
                             MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_UPDATE, MPI_COMM_WORLD);
                             prev = tmp;
                             tmp = tmp->next;
@@ -313,7 +315,7 @@ void noeud(int rang){
                     strcat(buf, buf_tmp1);
                     buf[strlen(buf)] = '\0';
 
-                    printf("buf to %d-%s-\n", id_req, buf);
+                 //   printf("buf to %d-%s-\n", id_req, buf);
                     MPI_Send(buf, size, MPI_CHAR, id_req, TAG_OK, MPI_COMM_WORLD);
                 }
                 break;
@@ -381,7 +383,7 @@ void noeud(int rang){
 
                 for (i = 0; i < l.nb_vois && tmp != NULL; i++, tmp = tmp->next) {
                     if (source == tmp->id) {
-                        printf("%d receive update of %d-%s-\n", rang, source, data);
+                //        printf("%d receive update of %d-%s-\n", rang, source, data);
 
                         (tmp->min).x = atoi(strtok(data, ";"));
                         (tmp->min).y = atoi(strtok(NULL, ";"));
