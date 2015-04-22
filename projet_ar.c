@@ -14,9 +14,8 @@ void coordinateur(int nb_proc){
         source = status.MPI_SOURCE;
         printf("insertion in overlay of id %d\n", source);
         MPI_Send(data, size, MPI_CHAR, 1, TAG_NOEUD, MPI_COMM_WORLD);
-        printf("ajout de noeud %s => ", data);
+        printf("ajout de noeud %s ", data);
         MPI_Recv(data, size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD, &status);
-  //      printf("%s\n", data);
     }
     
     struct donnee mem[10];
@@ -38,9 +37,9 @@ void coordinateur(int nb_proc){
         MPI_Send(data, size, MPI_CHAR, 1, TAG_DATA, MPI_COMM_WORLD);
         printf("ajout de donnee %s =>", data);
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
-    //    printf("%s\n", data);
     }
     
+    printf("seraching.................\n");
     for (i = 0; i < 14; i++) {
         int x, y;
         
@@ -168,6 +167,8 @@ void noeud(int rang){
 
     /**ecoute**/
     while (1) {
+        memset((void *)data, '\0', sizeof(char)*strlen(buf));
+        
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         int source = status.MPI_SOURCE;
         
@@ -177,6 +178,10 @@ void noeud(int rang){
         voisins *prev;
         point k, m, n, o;
         point z1, z2;
+
+        memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+        memset((void *)buf_tmp1, '\0', sizeof(char)*strlen(buf_tmp1));
+        memset((void *)buf_tmp2, '\0', sizeof(char)*strlen(buf_tmp2));
 
         switch (status.MPI_TAG) {
             case TAG_NOEUD:
