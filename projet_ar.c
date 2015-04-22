@@ -1,25 +1,62 @@
 #include "projet_ar.h"
 
-void coordinateur(){
+
+void coordinateur(int nb_proc){
     char *data;
     MPI_Status status;
     int source;
+    int i = 0;
     
-    while (1) {
-        MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        switch (status.MPI_TAG) {
-            case 0:
-                source = status.MPI_SOURCE;
-                MPI_Send(data, 128, MPI_CHAR, 1, TAG_NOEUD, MPI_COMM_WORLD);
-                MPI_Recv(data, 128, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD, &status);
-                break;
-            
+    for (i = 0; i < nb_proc - 2; i++) {
+        MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, TAG_NOEUD, MPI_COMM_WORLD, &status);
                 
-                
-            default:
-                break;
-        }
+        source = status.MPI_SOURCE;
+        MPI_Send(data, 128, MPI_CHAR, 1, TAG_NOEUD, MPI_COMM_WORLD);
+        printf("ajout de noeud %s\n", data);
+        MPI_Recv(data, 128, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD, &status);
     }
+    
+    struct donnee mem[10];
+    
+    for (i = 0; i < 10*nb_proc; i++) {
+        int x, y;
+        x = rand() % 1000;
+        y = rand() % 1000;
+        
+        int j = 0;
+        if ((i < 5) || (i >= 10*nb_proc - 5)) {
+            mem[j].p.x = x;
+            mem[j].p.y = y;
+            mem[j].val = x + y;
+            j++;
+        }
+        
+        sprintf(data, "%d;%d;%d\n", x, y, x + y);
+        MPI_Send(data, 128, MPI_CHAR, 1, TAG_DATA, MPI_COMM_WORLD);
+        printf("ajout de donnee %s\n", data);
+        MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
+        
+    }
+    
+    for (i = 0; i < 14; i++) {
+        int x, y;
+        
+        if (i >= 10) {
+            x = rand() % 1000;
+            y = rand() % 1000;
+        }
+        else{
+            x = mem[i].p.x;
+            y = mem[i].p.y;
+        }
+            
+        
+        sprintf(data, "%d;%d", x, y);
+        MPI_Send(data, 128, MPI_CHAR, 1, TAG_SEARCH, MPI_COMM_WORLD);
+        MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
+        printf("recherche %s\n", data);
+    }
+    
 }
 
 int est_voisins(point a, point b, point c, point d){
@@ -38,6 +75,7 @@ int est_voisins(point a, point b, point c, point d){
 
 void noeud(int rang){
     struct local l;
+    
     char *data;
     MPI_Status status;
     
@@ -50,6 +88,7 @@ void noeud(int rang){
         l.max.x = 1000;
         l.max.y = 1000;
         l.nb_vois = 0;
+        l.d = NULL;
         L.v = NULL;
     }
     else{
@@ -58,6 +97,7 @@ void noeud(int rang){
          */
         l.p.x = rand() % 1000;
         l.p.y = rand() % 1000;
+        l.d = NULL;
         sprintf(data, "%d;%d;%d\n", rang, l.p.x, l.p.y);
         MPI_Send(data, 128, MPI_CHAR, 0, TAG_NOEUD, MPI_COMM_WORLD);
         MPI_Recv(data, 128, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
@@ -85,10 +125,10 @@ void noeud(int rang){
                 
                 MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
                 
-                tmp->min.x = atoi(strtok(NULL, ";"));
-                tmp->min.y = atoi(strtok(NULL, ";"));
-                tmp->max.x = atoi(strtok(NULL, ";"));
-                tmp->max.y = atoi(strtok(NULL, ";"));
+                (tmp->min).x = atoi(strtok(NULL, ";"));
+                (tmp->min).y = atoi(strtok(NULL, ";"));
+                (tmp->max).x = atoi(strtok(NULL, ";"));
+                (tmp->max).y = atoi(strtok(NULL, ";"));
                 
                 if (tmp->min.x >= l.max.x) {
                     tmp->pos = 1;
@@ -143,13 +183,7 @@ void noeud(int rang){
                     }else{
                         route = 2;
                     }
-                 //   }else{
-                  //      if (y_req > l.max.y) {
-                 //           route = 0;
-                  //      }else{
-                 //           route = 2;
-                 //       }
-                //    }
+               
                     for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
                         if (tmp->pos == route) {
                             sprintf(buf, "%d;%d;%d\n", id_req, x_req, y_req);
@@ -197,7 +231,7 @@ void noeud(int rang){
                     for (i = 0; i < l.nb_vois; i++) {
                         if (est_voisins(z1, z2, tmp->min, tmp->max)){
                             t++;
-                            sprintf(buf_tmp2, ";%d;%d;%d;%d;%d", tmp->id, tmp->min.x, tmp->min.y, tmp->max.x, tmp->max.y);
+                            sprintf(buf_tmp2, ";%d;%d;%d;%d;%d", tmp->id, (tmp->min).x, (tmp->min).y, (tmp->max).x, (tmp->max).y);
                             strcat(buf_tmp1, buf_tmp2);
                         }
                         if (est_voisins(l.min, l.max, tmp->min, tmp->max)) {
@@ -259,10 +293,10 @@ void noeud(int rang){
                 tmp = (voisins *)malloc(sizeof(voisins));
                 tmp->id = source;
                 // car le mess sous forme xmin;ymin;xmax;ymax
-                tmp->min.x = atoi(strtok(data, ";"));;
-                tmp->min.y = atoi(strtok(NULL, ";"));;
-                tmp->max.x = atoi(strtok(NULL, ";"));
-                tmp->max.y = atoi(strtok(NULL, ";"));
+                (tmp->min).x = atoi(strtok(data, ";"));;
+                (tmp->min).y = atoi(strtok(NULL, ";"));;
+                (tmp->max).x = atoi(strtok(NULL, ";"));
+                (tmp->max).y = atoi(strtok(NULL, ";"));
                 
                 if (tmp->max.x == l.min.x) {
                     tmp->pos = 3;
@@ -284,13 +318,113 @@ void noeud(int rang){
 
                 for (i = 0; i < l.nb_vois && tmp != NULL; i++, tmp = tmp->next) {
                     if (source = tmp->id) {
-                        tmp->min.x = strtok(data, ";");
-                        tmp->min.y = strtok(NULL, ";");
-                        tmp->max.x = strtok(NULL, ";");
-                        tmp->max.y = strtok(NULL, ";");
+                        (tmp->min).x = strtok(data, ";");
+                        (tmp->min).y = strtok(NULL, ";");
+                        (tmp->max).x = strtok(NULL, ";");
+                        (tmp->max).y = strtok(NULL, ";");
                         break;
                     }
                 }
+                break;
+                
+            case TAG_DATA:
+                
+                // data_message contient x;y;valeur
+                
+                int x = strtok(data, ";");
+                int y = strtok(NULL, ";");
+                int valeur = strtok(NULL, ";");
+                
+                if ((x < l.min.x) || (x > l.max.x) || (y > l.max.y) || (y < l.min.y)) {
+                    if (x > l.max.x) {
+                        route = 1;
+                    }else if (x < l.min.x){
+                        route = 3;
+                    }else if( y > l.max.y){
+                        route = 0;
+                    }else{
+                        route = 2;
+                    }
+                    
+                    for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
+                        if (tmp->pos == route) {
+                            sprintf(buf, "%d;%d;%d\n", x, y, valeur);
+                            MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_DATA, MPI_COMM_WORLD);
+                            break;
+                        }
+                    }
+                }else{
+                    
+                    if (l.d == NULL) {
+                        l.d = (struct donnee *)malloc(sizeof(struct donnee));
+                        l.d->val = valeur;
+                        (l.d->p).x = x;
+                        (l.d->p).y = y;
+                        l.d->next = NULL;
+                        l.d->prev = NULL;
+                    }else{
+                        struct donnee *d_tmp = l.d;
+                        
+                        do{
+                            if (((d_tmp->p).x == x) && ((d_tmp->p).y == y)){
+                                d_tmp->val = valeur;
+                                break;
+                            }
+                            d_tmp = d_tmp->next;
+                        }while(d_tmp != NULL);
+                        
+                        d_tmp = l.d;
+                        d_tmp->prev = (struct donnee *)malloc(sizeof(struct donnee));
+                        d_tmp->prev->next = d_tmp;
+                        d_tmp->prev->prev = NULL;
+                        ld.d = d_tmp->prev;
+                        ld.d->val = valeur;
+                        (l.d->p).x = x;
+                        (l.d->p).y = y;
+                    }
+                    MPI_Send("", 128, MPI_CHAR, 0, TAG_OK, MPI_COMM_WORLD);
+                }
+                
+                break;
+            
+            case TAG_SEARCH:
+                
+                int x = strtok(data, ";");
+                int y = strtok(NULL, ";");
+                int valeur = -1;
+                
+                if ((x < l.min.x) || (x > l.max.x) || (y > l.max.y) || (y < l.min.y)) {
+                    if (x > l.max.x) {
+                        route = 1;
+                    }else if (x < l.min.x){
+                        route = 3;
+                    }else if( y > l.max.y){
+                        route = 0;
+                    }else{
+                        route = 2;
+                    }
+                    
+                    for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
+                        if (tmp->pos == route) {
+                            sprintf(buf, "%d;%d\n", x, y);
+                            MPI_Send(buf, 128, MPI_CHAR, tmp->id, TAG_SEARCH, MPI_COMM_WORLD);
+                            break;
+                        }
+                    }
+                }else{
+                    struct donnee *d_tmp = l.d;
+                    while (d_tmp != NULL) {
+                        if (x == (d_tmp->p).x && y == (d_tmp->p).y) {
+                            valeur = (d_tmp)->val;
+                            break;
+                        }
+                        d_tmp = d_tmp->next;
+                    }
+                    sprintf(buf, "%d;%d;%d\n", x, y, valeur);
+                    MPI_Send(buf, 128, MPI_CHAR, 0, TAG_SEARCH, MPI_COMM_WORLD);
+                    
+                }
+                
                 break;
                 
             default:
@@ -298,6 +432,24 @@ void noeud(int rang){
         }
         
     }
+}
+
+int main(int argc, char ** argv){
+    int my_rank;
+    int nb_proc;
+    
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    if (my_rank == 0) {
+        coordinateur(nb_proc);
+    }else{
+        noeud(my_rank);
+    }
+    
+    MPI_Finalize();
+    return 0;
 }
 
 

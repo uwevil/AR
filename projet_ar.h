@@ -37,12 +37,23 @@ struct liste_voisins{
 
 typedef struct liste_voisins voisins;
 
+struct donnee{
+    int val;
+    point p;
+    struct donnee *next;
+    struct donnee *prev;
+} ;
+
 struct local{
     point p;
     point min, max;
     int nb_vois;
+    struct donnee *d;
     voisins *v;
-}
+};
+
+
+
 
 
 #endif /* defined(____projet__) */
