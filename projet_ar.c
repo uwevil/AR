@@ -57,7 +57,7 @@ void coordinateur(int nb_proc){
         MPI_Send(data, size, MPI_CHAR, 1, TAG_SEARCH, MPI_COMM_WORLD);
         printf("recherche %s = ", data);
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
-     //   printf("%s\n", data);
+        printf("%s", data);
 
     }
     
