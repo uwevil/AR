@@ -20,8 +20,10 @@
 #define TAG_ADD     4
 #define TAG_DELETE  5
 #define TAG_UPDATE  6
+#define TAG_NOEUD_DELETE 7
+#define TAG_NOEUD_UPDATE 8
 
-#define size 1<<15
+#define size 1<<19
 
 #define min(a,b) ((a <= b) ? a : b)
 #define max(a,b) ((a >= b) ? a : b)
@@ -54,9 +56,5 @@ struct local{
     struct donnee *d;
     voisins *v;
 };
-
-
-
-
 
 #endif /* defined(____projet__) */
