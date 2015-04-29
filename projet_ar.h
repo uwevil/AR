@@ -22,6 +22,7 @@
 #define TAG_UPDATE  6
 #define TAG_NOEUD_DELETE 7
 #define TAG_NOEUD_UPDATE 8
+#define TAG_NOEUD_DATA   9
 
 #define size 1<<20
 

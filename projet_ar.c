@@ -131,7 +131,7 @@ void noeud(int rang){
     struct local l;
     char buf[size], buf_tmp1[1024], buf_tmp2[1024];
 
-    char data[size], data_tmp[size];
+    char data[size], *data_tmp;
     MPI_Status status;
     
     /**Initialisation**/
@@ -592,6 +592,8 @@ void noeud(int rang){
                     for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
                         if (tmp->pos == route) {
                             sprintf(buf, "%d;%d\n", x, y);
+                            buf[strlen(buf)] = '\0';
+
                             MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_SEARCH, MPI_COMM_WORLD);
                             MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
                             break;
@@ -665,8 +667,7 @@ void noeud(int rang){
                                 if (((l.min.x == (tmp->min).x) && (l.max.x == (tmp->max).x)) ||
                                     ((l.min.y == (tmp->min).y) && (l.max.y == (tmp->max).y))) {
                                     
-                                    //message type id;1;pos;xmin;ymin;xmax;ymax;nb_voisin;id1;xmin;ymin;xmax;ymax;id2...;nb_data;x;y;valeur;x;y;valeur...
-                                    
+                                    //message type id;1;pos;xmin;ymin;xmax;ymax;nb_voisin;id1;xmin;ymin;xmax;ymax;id2...
                                     sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d", rang, 1, tmp->pos, l.min.x, l.min.y, l.max.x, l.max.y, l.nb_vois - 1);
                                     
                                     prev = l.v;
@@ -682,28 +683,43 @@ void noeud(int rang){
                                         
                                         prev = prev->next;
                                     }
-                                    
-                                    d_tmp = l.d;
-                                    t = 0;
-                                    while (1) {
-                                        if (d_tmp == NULL) {
-                                            break;
-                                        }else{
-                                            sprintf(buf_tmp1, ";%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
-                                            strcat(buf_tmp2, buf_tmp1);
-                                            t++;
-                                            d_tmp = d_tmp->next;
-                                        }
-                                    }
-                                    
-                                    sprintf(buf_tmp1, ";%d", t);
-                                    strcat(buf, buf_tmp1);
-                                    strcat(buf, buf_tmp2);
-
+                                    //**********************
                                     buf[strlen(buf)] = '\0';
 
                                     MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_UPDATE, MPI_COMM_WORLD);
                                     MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+                                    //**********************
+                                    d_tmp = l.d;
+                                    t = 0;
+                                    while (1) {
+                                        if (d_tmp == NULL) {
+                                            //********************
+                                            memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+
+                                            MPI_Send("OK", size, MPI_CHAR, tmp->id, TAG_NOEUD_DATA, MPI_COMM_WORLD);
+                                            MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+                                            //*********************
+                                            break;
+                                        }else{
+                                            //**************************
+                                            memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+                                            sprintf(buf, "%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
+                                            buf[strlen(buf)] = '\0';
+
+                                            MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_DATA, MPI_COMM_WORLD);
+                                            MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+
+                                            //**************************
+                                            /*
+                                            sprintf(buf_tmp1, ";%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
+                                            strcat(buf_tmp2, buf_tmp1);
+                                             */
+                                            t++;
+                                            d_tmp = d_tmp->next;
+                                        }
+                                    }
+                                    //**********************
+                                    //**********************
                                     break;
                                 }
                                 if (tmp->next == NULL) {
@@ -736,28 +752,39 @@ void noeud(int rang){
                                             prev = prev->next;
                                         }
                                         
-                                        d_tmp = l.d;
-                                        t = 0;
-                                        while (1) {
-                                            if (d_tmp == NULL) {
-                                                break;
-                                            }else{
-                                                sprintf(buf_tmp1, ";%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
-                                                strcat(buf_tmp2, buf_tmp1);
-                                                t++;
-                                                d_tmp = d_tmp->next;
-                                            }
-                                        }
-                                        
-                                        sprintf(buf_tmp1, ";%d", t);
-                                        strcat(buf, buf_tmp1);
-                                        strcat(buf, buf_tmp2);
-                                        
+                                        //**********************
                                         buf[strlen(buf)] = '\0';
                                         
                                         MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_UPDATE, MPI_COMM_WORLD);
                                         MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
-
+                                        
+                                        //**********************
+                                        
+                                        d_tmp = l.d;
+                                        t = 0;
+                                        while (1) {
+                                            if (d_tmp == NULL) {
+                                                //********************
+                                                memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+                                                
+                                                MPI_Send("OK", size, MPI_CHAR, tmp->id, TAG_NOEUD_DATA, MPI_COMM_WORLD);
+                                                MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+                                                //*********************
+                                                break;
+                                            }else{
+                                                //**************************
+                                                memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+                                                sprintf(buf, "%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
+                                                buf[strlen(buf)] = '\0';
+                                                
+                                                MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_DATA, MPI_COMM_WORLD);
+                                                MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+                                                
+                                                //**************************
+                                                t++;
+                                                d_tmp = d_tmp->next;
+                                            }
+                                        }
                                     }
                                     
                                     if (tmp->next == NULL) {
@@ -773,7 +800,7 @@ void noeud(int rang){
                                     if (tmp->pos != i) {
                                         sprintf(buf, "%d;%d", rang, 0);
                                         buf[strlen(buf)] = '\0';
-                                        MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_DELETE, MPI_COMM_WORLD);
+                                        MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_UPDATE, MPI_COMM_WORLD);
                                         MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
 
                                     }
@@ -783,9 +810,7 @@ void noeud(int rang){
                                     tmp = tmp->next;
                                 }
                             }
-                        
                         }
-                    
                     }
                     
                     while (tmp) {
@@ -803,16 +828,12 @@ void noeud(int rang){
                     }
                     
                     MPI_Send("", size, MPI_CHAR, 0, TAG_OK, MPI_COMM_WORLD);
- 
                 }
                 break;
                 
             case TAG_NOEUD_UPDATE:
-                if (source != 0) {
-                    MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
-                }
-
-                strcpy(data_tmp, data);
+              
+                data_tmp = strdup(data);
                 printf("id %d recoit %s\n", rang, data_tmp);
                 
                 id_req = atoi(strtok(data_tmp, ";"));
@@ -829,13 +850,14 @@ void noeud(int rang){
                             l.nb_vois--;
                             i--;
                             MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
+
                             break;
                         }
                         prev = tmp;
                         tmp = tmp->next;
                     }
                 }else{
-                    //message type id;1;pos;xmin;ymin;xmax;ymax;nb_voisin;id1;xmin;ymin;xmax;ymax;id2...;nb_data;x;y;valeur;x;y;valeu...
+                    //message type id;1;pos;xmin;ymin;xmax;ymax;nb_voisin;id1;xmin;ymin;xmax;ymax;id2...
                     y_req = atoi(strtok(NULL, ";"));
                     m.x = atoi(strtok(NULL, ";"));
                     m.y = atoi(strtok(NULL, ";"));
@@ -854,6 +876,7 @@ void noeud(int rang){
                     }
                     printf("apres la modif %d %d %d %d %d\n", rang, l.min.x, l.min.y, l.max.x, l.max.y);
 
+                    //nombre de voisins recu
                     q = atoi(strtok(NULL, ";"));
                     
                     i = 0;
@@ -899,6 +922,7 @@ void noeud(int rang){
                             
                         }
                     }
+
                     tmp = l.v;
                     
                     for (i = 0; i < l.nb_vois; i++) {
@@ -910,16 +934,26 @@ void noeud(int rang){
                         }
                        
                     }
+                    
+                    //**********************************************************
+                    MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
+                    //**********************************************************
 
-                    q = atoi(strtok(NULL, ";"));
+                    while (1) {
+                        memset((void *)buf, '\0', sizeof(char)*strlen(buf));
+                        MPI_Recv(buf, size, MPI_CHAR, source, TAG_NOEUD_DATA, MPI_COMM_WORLD, &status);
 
-                    for (i = 0; i < q; i++){
-
-                        x = atoi(strtok(NULL, ";"));
+                        if (strlen(buf) <= 5) {
+                            break;
+                        }
+                        
+                        MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
+                        
+                        x = atoi(strtok(buf, ";"));
                         y = atoi(strtok(NULL, ";"));
                         valeur = atoi(strtok(NULL, ";"));
-
-                        printf("%d valeur(s) = %d %d %d\n", q, x, y, valeur);
+                        
+                        printf("update valeur(s) = %d %d %d\n",x, y, valeur);
                         if (l.d == NULL) {
                             l.d = (struct donnee *)malloc(sizeof(struct donnee));
                             l.d->val = valeur;
@@ -937,8 +971,9 @@ void noeud(int rang){
                             (l.d->p).x = x;
                             (l.d->p).y = y;
                         }
+                        
                     }
-                    MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
+                    MPI_Send("OK", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
                 }
 
                 break;
