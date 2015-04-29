@@ -222,7 +222,8 @@ void noeud(int rang){
     }
 
     /**ecoute**/
-    while (1) {
+    int ok = 1;
+    while (ok) {
         memset((void *)data, '\0', sizeof(char)*strlen(data));
 
         //écoute les messages à l'entrée
@@ -686,6 +687,7 @@ void noeud(int rang){
                                     //**********************
                                     buf[strlen(buf)] = '\0';
 
+                                    q = tmp->id;
                                     MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_UPDATE, MPI_COMM_WORLD);
                                     MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
                                     //**********************
@@ -710,10 +712,7 @@ void noeud(int rang){
                                             MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
 
                                             //**************************
-                                            /*
-                                            sprintf(buf_tmp1, ";%d;%d;%d", (d_tmp->p).x, (d_tmp->p).y, d_tmp->val);
-                                            strcat(buf_tmp2, buf_tmp1);
-                                             */
+                                            
                                             t++;
                                             d_tmp = d_tmp->next;
                                         }
@@ -726,6 +725,7 @@ void noeud(int rang){
                                     break;
                                 }
                             }
+                            
                             if ((( l.min.x != tmp->min.x) || (l.max.x != tmp->max.x)) &&
                                 (( l.min.y != tmp->min.y) || (l.max.y != tmp->max.y))) {
                                 
@@ -734,6 +734,7 @@ void noeud(int rang){
                                 
                                 tmp = l.v;
                                 i = tmp->pos;
+                                printf("i ==%d== %d\n", rang, i);
                                 while (1) {
                                     if (tmp->pos == i) {
                                         sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d", rang, 1, tmp->pos, l.min.x, l.min.y, l.max.x, l.max.y, l.nb_vois - 1);
@@ -796,6 +797,8 @@ void noeud(int rang){
                             }else{
                                 tmp = l.v;
                                 i = tmp->pos;
+                                printf("i ==%d== %d\n", rang, i);
+
                                 while (1) {
                                     if (tmp->pos != i) {
                                         sprintf(buf, "%d;%d", rang, 0);
@@ -826,7 +829,7 @@ void noeud(int rang){
                         d_tmp = d_tmp1;
                         l.nb_vois = 0;
                     }
-                    
+                    ok = 0;
                     MPI_Send("", size, MPI_CHAR, 0, TAG_OK, MPI_COMM_WORLD);
                 }
                 break;
@@ -975,7 +978,6 @@ void noeud(int rang){
                     }
                     MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
                 }
-                printf("on est ici %d\n", rang);
                 break;
                 
             default:
