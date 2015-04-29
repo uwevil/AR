@@ -24,7 +24,7 @@
 #define TAG_NOEUD_UPDATE 8
 #define TAG_NOEUD_DATA   9
 
-#define size 1<<20
+#define size 1<<15
 
 #define min(a,b) ((a <= b) ? a : b)
 #define max(a,b) ((a >= b) ? a : b)

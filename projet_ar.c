@@ -76,7 +76,6 @@ void coordinateur(int nb_proc){
         //la requete de recherche sous forme "x;y"
         sprintf(data, "%d;%d", x, y);
         MPI_Send(data, size, MPI_CHAR, 1, TAG_SEARCH, MPI_COMM_WORLD);
-    //    printf("recherche %s => reponse from ", data);
    
         memset((void *)data, '\0', sizeof(char)*strlen(data));
 
@@ -664,6 +663,8 @@ void noeud(int rang){
                         if (((d_tmp->p).x != x) || ((d_tmp->p).y != y)) {
                             printf("Clé ( %d, %d) n'existe pas!\n", x, y);
                         }else{
+                            tmp = l.v;
+                            
                             for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
                                 if (((l.min.x == (tmp->min).x) && (l.max.x == (tmp->max).x)) ||
                                     ((l.min.y == (tmp->min).y) && (l.max.y == (tmp->max).y))) {
@@ -734,7 +735,7 @@ void noeud(int rang){
                                 
                                 tmp = l.v;
                                 i = tmp->pos;
-                                printf("i ==%d== %d\n", rang, i);
+
                                 while (1) {
                                     if (tmp->pos == i) {
                                         sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d", rang, 1, tmp->pos, l.min.x, l.min.y, l.max.x, l.max.y, l.nb_vois - 1);
@@ -797,8 +798,7 @@ void noeud(int rang){
                             }else{
                                 tmp = l.v;
                                 i = tmp->pos;
-                                printf("i ==%d== %d\n", rang, i);
-
+                                
                                 while (1) {
                                     if (tmp->pos != i) {
                                         sprintf(buf, "%d;%d", rang, 0);
@@ -816,6 +816,7 @@ void noeud(int rang){
                         }
                     }
                     
+                    tmp = l.v;
                     while (tmp) {
                         prev = tmp->next;
                         free(tmp);
