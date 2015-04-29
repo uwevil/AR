@@ -23,7 +23,7 @@
 #define TAG_NOEUD_DELETE 7
 #define TAG_NOEUD_UPDATE 8
 
-#define size 1<<19
+#define size 1<<20
 
 #define min(a,b) ((a <= b) ? a : b)
 #define max(a,b) ((a >= b) ? a : b)

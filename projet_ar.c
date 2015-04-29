@@ -9,22 +9,24 @@ void coordinateur(int nb_proc){
     
     memset((void *)data, '\0', sizeof(char)*strlen(data));
     
+    //recoit la réponse du noeud 1
     MPI_Recv(data, size, MPI_CHAR, 1, TAG_OK, MPI_COMM_WORLD, &status);
     printf("\n....................adding node.................\n");
 
     for (i = 0; i < nb_proc - 2; i++) {
         memset((void *)data, '\0', sizeof(char)*strlen(data));
-        
+        //écoute les demandes d'ajout au overlay
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_NOEUD, MPI_COMM_WORLD, &status);
         
         source = status.MPI_SOURCE;
         printf("insertion in overlay of id %d\n", source);
        
+        //envoie la demande au noeud 1
         MPI_Send(data, size, MPI_CHAR, 1, TAG_NOEUD, MPI_COMM_WORLD);
         printf("ajout de noeud %s ", data);
         
         memset((void *)data, '\0', sizeof(char)*strlen(data));
-
+        //recoit la confirmation d'avoir été ajouté à overlay
         MPI_Recv(data, size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD, &status);
     }
     
@@ -34,9 +36,10 @@ void coordinateur(int nb_proc){
 
     for (i = 0; i < 10*nb_proc; i++) {
         int x, y;
-        x = rand() % 1000;
-        y = rand() % 1000;
+        x = rand() % 1000; // génére la valeur aléatoire
+        y = rand() % 1000; // génére la valeur aléatoire
         
+        //stock les 5 premières valeurs et 5 dernières
         if ((i < 5) || (i >= 10*nb_proc - 5)) {
             mem[j].p.x = x;
             mem[j].p.y = y;
@@ -45,12 +48,13 @@ void coordinateur(int nb_proc){
         }
         memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+        //envoie le requete d'ajout des données sous forme 'x;y;x+y'
         sprintf(data, "%d;%d;%d\n", x, y, x + y);
         MPI_Send(data, size, MPI_CHAR, 1, TAG_DATA, MPI_COMM_WORLD);
         printf("ajout de donnee %s", data);
        
         memset((void *)data, '\0', sizeof(char)*strlen(data));
-
+        //recoit la confirmation
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
     }
     
@@ -59,78 +63,80 @@ void coordinateur(int nb_proc){
         int x, y;
         
         if (i >= 10) {
-            x = rand() % 1000;
+            x = rand() % 1000; // génère les 5 dernières valeurs aléatoires pour la recherche
             y = rand() % 1000;
         }
         else{
-            x = mem[i].p.x;
+            x = mem[i].p.x; // 5 premières et 5 dernières valeurs stockées de l'étape "ajout data"
             y = mem[i].p.y;
         }
         
         memset((void *)data, '\0', sizeof(char)*strlen(data));
         
+        //la requete de recherche sous forme "x;y"
         sprintf(data, "%d;%d", x, y);
         MPI_Send(data, size, MPI_CHAR, 1, TAG_SEARCH, MPI_COMM_WORLD);
     //    printf("recherche %s => reponse from ", data);
    
         memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+        //recoit la réponse avec le noeud qui contient la donnée
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
-        printf("%d = %s", status.MPI_SOURCE, data);
+        printf("noeud %d repond %s", status.MPI_SOURCE, data);
     }
     
     printf("....................deleting node.................\n");
     
     memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+    //supprime le noeud qui contient la donnée dans cette coordonnée "x;y"
     sprintf(data, "%d;%d\n", mem[7].p.x, mem[7].p.y);
     MPI_Send(data, size, MPI_CHAR, 1, TAG_NOEUD_DELETE, MPI_COMM_WORLD);
     printf("deleted %s", data);
 
     memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+    //recoit la confirmation de la suppression
     MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
     
     printf("....................re-rearching.................\n");
     
     memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+    //recherche à nouveau la donnée ou se trouve dans le noeud supprimé
     sprintf(data, "%d;%d\n", mem[7].p.x, mem[7].p.y);
     MPI_Send(data, size, MPI_CHAR, 1, TAG_SEARCH, MPI_COMM_WORLD);
     printf("recherche %s => ", data);
 
     memset((void *)data, '\0', sizeof(char)*strlen(data));
-
+    
+    //recoit la réponse avec la valeur ou se trouve dans le noeud supprimé
     MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
     printf("id %d repond %s", status.MPI_SOURCE, data);
     
 }
 
+//la fonction qui calcule si 2 espaces sont adjacents
 int est_voisins(point a, point b, point c, point d){
-   // printf("est voisins: (%d %d, %d %d)(%d %d, %d %d) => ",a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y);
-   
     if (((a.x == c.x) && (( b.y == c.y) || (a.y == d.y))) ||
         ((b.x == c.x) && (( b.y == d.y) || (a.y == c.y))) ||
         ((a.x == d.x) && (( b.y == d.y) || (a.y == c.y))) ||
         ((b.x == d.x) && (( b.y == c.y) || (a.y == d.y)))) {
-   //     printf("OK\n");
-
         return 1;
     }
-    
-  //  printf("NO\n");
     return 0;
 }
 
 void noeud(int rang){
     struct local l;
-    char buf[size], buf_tmp1[size], buf_tmp2[size];
+    char buf[size], buf_tmp1[1024], buf_tmp2[1024];
 
     char data[size], data_tmp[size];
     MPI_Status status;
     
     /**Initialisation**/
     if (rang == 1) {
+        //le noeud 1 génère ses coordonnées et envoies au coordinateur
         l.p.x = rand() % 1000;
         l.p.y = rand() % 1000;
         l.min.x = 0;
@@ -150,9 +156,12 @@ void noeud(int rang){
         l.p.y = rand() % 1000;
         l.d = NULL;
         
+        //génère les coordonnées et envoie la demande au coordinateur pour être placé dans overlay
         sprintf(data, "%d;%d;%d\n", rang, l.p.x, l.p.y);
 
         MPI_Send(data, size, MPI_CHAR, 0, TAG_NOEUD, MPI_COMM_WORLD);
+        
+        //la réponse est sous forme "x;y;xmin;ymin;xmax;ymax;nombre-voisins;id-voisin1;xmin1;xymin1;xmax1;ymax2;..."
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
 
         l.p.x = atoi(strtok(data, ";"));
@@ -168,13 +177,14 @@ void noeud(int rang){
         
         printf(" position réelle -%d-%d-%d-\n", rang, l.p.x, l.p.y);
 
+        //teste si il y a au moins un voisin
         if (l.nb_vois > 0) {
             l.v = (voisins *)malloc(sizeof(voisins));
             tmp = l.v;
             
-            sprintf(buf, "%d;%d;%d;%d\n", l.min.x, l.min.y, l.max.x, l.max.y);
-
             for (i = 0; i < l.nb_vois; i++) {
+                sprintf(buf, "%d;%d;%d;%d\n", l.min.x, l.min.y, l.max.x, l.max.y);
+
                 tmp->id = atoi(strtok(NULL, ";"));
                 
                 (tmp->min).x = atoi(strtok(NULL, ";"));
@@ -192,8 +202,11 @@ void noeud(int rang){
                     tmp->pos = 2;
                 }
                 
-            //    printf("voisin pos -%d-%d-\n", tmp->id, tmp->pos);
+                //si oui, ajout le voisin dans la liste des voisins et notifie le voisin pour qu'il puisse ajouter dans sa propre liste des voisins
+                //le message est sous forme "xmin;ymin;xmax;ymax" de l'émetteur
                 MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_ADD, MPI_COMM_WORLD);
+                MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
+                memset((void *)buf, '\0', sizeof(char)*strlen(buf));
 
                 if (i + 1 < l.nb_vois) {
                     tmp->next = (voisins *)malloc(sizeof(voisins));
@@ -212,6 +225,7 @@ void noeud(int rang){
     while (1) {
         memset((void *)data, '\0', sizeof(char)*strlen(data));
 
+        //écoute les messages à l'entrée
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         data[strlen(data)] = '\0';
         int source = status.MPI_SOURCE;
@@ -752,7 +766,6 @@ void noeud(int rang){
                                         tmp = tmp->next;
                                     }
                                 }
-                            
                             }else{
                                 tmp = l.v;
                                 i = tmp->pos;
@@ -906,7 +919,7 @@ void noeud(int rang){
                         y = atoi(strtok(NULL, ";"));
                         valeur = atoi(strtok(NULL, ";"));
 
-                        printf("%d valeur = %d %d %d\n", q, x, y, valeur);
+                        printf("%d valeur(s) = %d %d %d\n", q, x, y, valeur);
                         if (l.d == NULL) {
                             l.d = (struct donnee *)malloc(sizeof(struct donnee));
                             l.d->val = valeur;
@@ -924,7 +937,6 @@ void noeud(int rang){
                             (l.d->p).x = x;
                             (l.d->p).y = y;
                         }
-                    
                     }
                     MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
                 }
