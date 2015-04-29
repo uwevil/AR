@@ -636,7 +636,7 @@ void noeud(int rang){
                     
                     for (i = 0; i < l.nb_vois && tmp != NULL; i ++, tmp = tmp->next) {
                         if (tmp->pos == route) {
-                            sprintf(buf, "%d;%d;%d\n", x, y, valeur);
+                            sprintf(buf, "%d;%d\n", x, y);
                             MPI_Send(buf, size, MPI_CHAR, tmp->id, TAG_NOEUD_DELETE, MPI_COMM_WORLD);
                             MPI_Recv(buf, size, MPI_CHAR, tmp->id, TAG_OK, MPI_COMM_WORLD, &status);
                             break;
@@ -973,9 +973,9 @@ void noeud(int rang){
                         }
                         
                     }
-                    MPI_Send("OK", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
+                    MPI_Send("", size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD);
                 }
-
+                printf("on est ici %d\n", rang);
                 break;
                 
             default:
