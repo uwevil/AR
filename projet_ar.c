@@ -1069,7 +1069,6 @@ void noeud(int rang){
             default:
                 break;
         }
-        
     }
 }
 
