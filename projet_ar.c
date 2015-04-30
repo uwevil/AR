@@ -4,7 +4,7 @@
 // Ce projet est réalisé par Tai Liqun et DOAN Cao Sang 3002808                                     *
 //                                                                                                  *
 // Les étapes: insertion de noeud, insertion de données et recherche de données marchent très bien. *
-// L'étape suppression noeud et recherche après la suppression fonction 1 coup sur 3.               *
+// L'étape suppression noeud et recherche après la suppression fonctionnent.                        *
 //***************************************************************************************************
 
 //***************************************************************************************************
