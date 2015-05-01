@@ -1,6 +1,14 @@
 #include "projet_ar.h"
 
 //***************************************************************************************************
+//*                                                                                                 *
+//*                                        Projet AR                                                *
+//*                                  TAI Liqun & DOAN Cao Sang                                      *
+//*                                                                                                 *
+//***************************************************************************************************
+
+
+//***************************************************************************************************
 // Ce projet est réalisé par Tai Liqun et DOAN Cao Sang 3002808                                     *
 //                                                                                                  *
 // Les étapes: insertion de noeud, insertion de données et recherche de données marchent très bien. *
@@ -24,6 +32,10 @@ void coordinateur(int nb_proc){
     
 //recoit la réponse du noeud 1
     MPI_Recv(data, size, MPI_CHAR, 1, TAG_OK, MPI_COMM_WORLD, &status);
+//***************************************************************************************************
+// première étape                                                                                   *
+//***************************************************************************************************
+
     printf("\n....................adding node.................\n");
 
     for (i = 0; i < nb_proc - 2; i++) {
@@ -42,6 +54,10 @@ void coordinateur(int nb_proc){
 //recoit la confirmation d'avoir été ajouté à overlay
         MPI_Recv(data, size, MPI_CHAR, source, TAG_OK, MPI_COMM_WORLD, &status);
     }
+
+//***************************************************************************************************
+// deuxième étape                                                                                   *
+//***************************************************************************************************
     
     struct donnee mem[10];
     int j = 0;
@@ -70,6 +86,10 @@ void coordinateur(int nb_proc){
 //recoit la confirmation
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
     }
+
+//***************************************************************************************************
+// troisième étape                                                                                  *
+//***************************************************************************************************
     
     printf("....................seraching data.................\n");
     for (i = 0; i < 14; i++) {
@@ -98,6 +118,10 @@ void coordinateur(int nb_proc){
         MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
         printf("noeud %d repond %s", status.MPI_SOURCE, data);
     }
+  
+//***************************************************************************************************
+// quatrième étape                                                                                  *
+//***************************************************************************************************
     
     printf("....................deleting node.................\n");
     
@@ -112,6 +136,10 @@ void coordinateur(int nb_proc){
 
 //recoit la confirmation de la suppression
     MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, TAG_OK, MPI_COMM_WORLD, &status);
+    
+//***************************************************************************************************
+// recherche des données qui appartiennent au noeud supprimé                                        *
+//***************************************************************************************************
     
     printf("....................re-rearching.................\n");
     
@@ -129,6 +157,10 @@ void coordinateur(int nb_proc){
     printf("id %d repond %s", status.MPI_SOURCE, data);
     
 }
+
+//***************************************************************************************************
+//***************************************************************************************************
+
 
 //***************************************************************************************************
 // La fonction "est_voisins" qui calcule si 2 espaces sont adjacents                                *
